@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.bank.dao.FinanceManagementDao">
+
+    <select id="get" resultType="com.thinkgem.jeesite.modules.bank.entity.Finance">
+        SELECT
+        id,
+        name userName,
+        bank_id bankId,
+        mobile phone,
+        login_name loginName,
+        age age,
+        sex sex,
+        money money,
+        dk_money dkMoney,
+        hk_money hkMoney
+        FROM sys_user
+        WHERE user_type = '2' AND del_flag = '0' AND id=#{id}
+    </select>
+
+    <select id="findDkHkMoney" resultType="com.thinkgem.jeesite.modules.bank.entity.Finance">
+        SELECT
+        id,
+        name userName,
+        bank_id bankId,
+        mobile phone,
+        login_name loginName,
+        age age,
+        sex sex,
+
+            dk_money dkMoney,
+
+            hk_money hkMoney
+
+        FROM sys_user
+        WHERE user_type = '2' AND del_flag = '0' AND id=#{id}
+    </select>
+
+
+
+
+    <select id="findList" resultType="com.thinkgem.jeesite.modules.bank.entity.Finance">
+            SELECT
+            su.id,
+            su.name userName,
+            su.bank_id bankId,
+            su.mobile phone,
+            su.login_name loginName,
+            su.age age,
+            if(su.sex='1','男','女') sex,
+            su.money money,
+            su.dk_money dkMoney,
+            su.hk_money hkMoney,
+            DATE_FORMAT(su.update_date,'%Y-%m-%d %H:%i:%s') time
+            FROM sys_user su
+            WHERE su.user_type = '2' AND su.del_flag = '0'
+            <if test="userName != null and userName != ''">
+                AND su.name LIKE CONCAT('%', #{userName}, '%')
+            </if>
+            <if test="bankId != null and bankId != ''">
+                AND su.bank_id LIKE CONCAT('%', #{bankId}, '%')
+            </if>
+    </select>
+
+    <select id="findDeatilList" resultType="com.thinkgem.jeesite.modules.bank.entity.FinanceDetail">
+        SELECT
+        a.name userName,
+        a.bank_id bankId,
+        a.mobile phone,
+        a.login_name loginName,
+        DATE_FORMAT(t.apply_time,'%Y-%m-%d %H:%i:%s') applyTime,
+        t.money money,
+        t.serial_no serialNo,
+        if(t.type = '1','存款',if(t.type = '2','取款',if(t.type = '3','贷款','还款'))) type,
+        su.name jsAccountId
+        FROM sys_user a
+        INNER JOIN t_fund_account_info t ON t.user_id = a.id
+        INNER JOIN sys_user su ON su.id = t.js_account_id
+        WHERE a.user_type = '2' AND a.del_flag = '0'  AND t.user_id = #{id}
+        <if test="type == 1">
+            AND t.type in('1','2')
+        </if>
+        <if test="type == 2">
+            AND t.type in('3','4')
+        </if>
+        <if test="type == 3">
+            AND t.type = '5'
+        </if>
+        <if test="startTime != null and startTime != ''">
+            AND to_days(t.apply_time) &gt;= to_days(#{startTime})
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND to_days(t.apply_time) &lt;= to_days(#{endTime})
+        </if>
+    </select>
+
+    <select id="findDeatil" resultType="com.thinkgem.jeesite.modules.bank.entity.FinanceDetail">
+            SELECT
+            a.name userName,
+            a.bank_id bankId,
+            a.mobile phone,
+            a.login_name loginName,
+             DATE_FORMAT(t.apply_time,'%Y-%m-%d %H:%i:%s') applyTime,
+            t.money money,
+            t.serial_no serialNo,
+            t.type type
+            FROM sys_user a
+            INNER JOIN t_fund_account_info t ON t.user_id = a.id
+            WHERE a.user_type = '2' AND a.del_flag = '0' AND t.type=#{type} AND t.user_id = #{id}
+            <if test="startTime != null and startTime != ''">
+                AND to_days(t.apply_time) &gt;= to_days(#{startTime})
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND to_days(t.apply_time) &lt;= to_days(#{endTime})
+            </if>
+    </select>
+
+    <select id="findMonthDetailfinance" resultType="com.thinkgem.jeesite.modules.bank.entity.FinanceDetail">
+        SELECT
+        a.name userName,
+        a.login_name loginName,
+        sum(if(t.type = '1',t.money,0)) cKmoney,
+        sum(if(t.type = '2',t.money,0)) qKmoney,
+        sum(if(t.type = '3',t.money,0)) dKmoney
+        FROM sys_user a
+        INNER JOIN t_fund_account_info t ON t.user_id = a.id
+        WHERE a.user_type = '2' AND a.del_flag = '0'
+        <if test="userName != null and userName != ''">
+            AND a.name = #{userName}
+        </if>
+        <if test="startTime != null and startTime != ''">
+            AND to_days(t.apply_time) &gt;= to_days(#{startTime})
+        </if>
+        <if test="endTime != null and endTime != ''">
+            AND to_days(t.apply_time) &lt;= to_days(#{endTime})
+        </if>
+        GROUP BY t.user_id
+    </select>
+
+
+    <select id="getNowRate" resultType="com.thinkgem.jeesite.modules.bank.entity.Rate">
+        SELECT
+        id id,
+        dk_rate dkRate,
+        ck_rate ckRate
+        FROM sys_rate
+    </select>
+
+    <insert id="insertRate">
+        insert INTO sys_rate(
+        id,
+       dk_rate,
+       ck_rate
+        ) VALUES (
+        #{id},
+        #{dkRate},
+        #{ckRate}
+        )
+    </insert>
+
+
+    <update id="updateRate">
+           UPDATE sys_rate SET
+            dk_rate = #{dkRate},
+            ck_rate = #{ckRate}
+            where id = #{id}
+    </update>
+
+
+    <update id="updatePassword">
+        UPDATE sys_user SET
+        password = #{newPassword}
+        where id = #{id}
+    </update>
+
+
+        <select id="findMoney" resultType="java.math.BigDecimal">
+            SELECT
+            money money
+            FROM sys_user
+            WHERE id=#{userId}
+        </select>
+
+
+    <select id="findBankId" resultType="com.thinkgem.jeesite.modules.sys.entity.User">
+        SELECT
+        name name
+        FROM sys_user
+        WHERE bank_id=#{bankId}
+    </select>
+
+
+    <select id="findJsAccount" resultType="java.lang.String">
+        SELECT
+        id
+        FROM sys_user
+        WHERE bank_id=#{bankId}
+    </select>
+
+
+
+
+   <insert id="saveGlide">
+    insert INTO t_fund_account_info(
+    id,
+    serial_no,
+    user_id,
+    money,
+    js_account_id,
+    apply_time,
+    type,
+    del_flag
+    ) VALUES (
+    #{id},
+    #{serialNo},
+    #{userId},
+    #{money},
+    #{jsAccountId},
+    now(),
+    #{type},
+    '0'
+    )
+    </insert>
+
+    <insert id="insertPerson">
+        insert INTO t_fund_account_info(
+        id,
+        serial_no,
+        user_id,
+        money,
+        js_account_id,
+        apply_time,
+        type,
+        del_flag
+        ) VALUES (
+        #{id},
+        #{serialNo},
+        #{userId},
+        #{money},
+        #{jsAccountId},
+        now(),
+        '5',
+        '0'
+        )
+    </insert>
+
+
+    <update id="saveMoney">
+        UPDATE sys_user SET
+        <if test="type == 1">
+        money = money + #{money},
+        </if>
+        <if test="type == 2">
+            money = money - #{money},
+        </if>
+        update_date = now()
+        where id = #{userId}
+    </update>
+
+
+    <update id="saveDkMoney">
+        UPDATE sys_user SET
+        <if test="type == 3">
+            dk_money = #{money},
+        </if>
+        <if test="type == 4">
+            hk_money = hk_money + #{money},
+        </if>
+        update_date = now()
+        where id = #{userId}
+    </update>
+
+
+    <update id="restDkMoney">
+        UPDATE sys_user SET
+        dk_money = '0',
+        hk_money = '0',
+        update_date = now()
+        where id = #{userId} and dk_money = hk_money
+    </update>
+
+
+    <update id="saveBankMoney">
+        UPDATE sys_user SET
+        <if test="type == 1">
+            money = money + #{money},
+        </if>
+        <if test="type == 2">
+            money = money - #{money},
+        </if>
+        update_date = now()
+        where id = #{userId}
+    </update>
+
+
+    <update id="saveToperson1">
+        UPDATE sys_user SET
+            money = money - #{money},
+        update_date = now()
+        where id = #{userId}
+    </update>
+
+    <update id="saveToperson2">
+         UPDATE sys_user SET
+            money = money + #{money},
+        update_date = now()
+        where id = #{jsAccountId}
+    </update>
+</mapper>

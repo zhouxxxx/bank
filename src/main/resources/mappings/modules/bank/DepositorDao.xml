@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.bank.dao.DepositorDao">
+
+    <select id="get" resultType="com.thinkgem.jeesite.modules.sys.entity.User">
+        SELECT
+        id,
+        name,
+        card_id cardId,
+        bank_id bankId,
+        mobile,
+        age,
+        if(sex='1','男','女') sex,
+        login_name loginName
+        FROM sys_user
+        WHERE user_type = '2' AND del_flag = '0' AND id=#{id}
+    </select>
+
+    <select id="checkName" resultType="java.lang.String">
+        SELECT
+        name
+        FROM sys_user
+        WHERE  login_name=#{loginName}
+    </select>
+
+
+    <select id="findList" resultType="com.thinkgem.jeesite.modules.sys.entity.User">
+            SELECT
+            a.id id,
+            a.name name,
+            a.card_id cardId,
+            a.bank_id bankId,
+            a.mobile mobile,
+            a.age age,
+            if(a.sex='1','男','女') sex,
+            a.login_name loginName
+            FROM sys_user a
+            WHERE a.user_type = '2' AND a.del_flag = '0'
+            <if test="name != null and name != ''">
+                AND a.name like CONCAT('%', #{name}, '%')
+            </if>
+            <if test="mobile != null and mobile != ''">
+                AND a.mobile like CONCAT('%', #{mobile}, '%')
+            </if>
+    </select>
+
+    <!-- 插入用户 -->
+    <insert id="insert">
+    INSERT INTO sys_user(
+    id,
+    name,
+    login_name,
+    card_id,
+    bank_id,
+    mobile,
+    age,
+    sex,
+    money,
+    dk_money,
+    hk_money,
+    password,
+    user_type,
+    del_flag,
+    update_date
+    ) VALUES (
+    #{id},
+    #{name},
+    #{loginName},
+    #{loginName},
+    #{bankId},
+    #{mobile},
+    #{age},
+    #{sex},
+    '0',
+    '0',
+    '0',
+    #{password},
+    '2',
+    '0',
+    now()
+    )
+    </insert>
+
+    <update id="update">
+        UPDATE sys_user SET
+        name=#{name},
+        mobile=#{mobile},
+        age=#{age},
+        sex=#{sex},
+        update_date = now()
+        <if test="password !=null and password !=''">
+            ,password = #{password}
+        </if>
+        where id = #{id}
+    </update>
+
+
+    <update id="updatePassword">
+        UPDATE sys_user SET
+        password = #{password},
+        update_date = now()
+        where id = #{id}
+    </update>
+</mapper>
